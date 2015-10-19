@@ -66,6 +66,7 @@ import javax.faces.render.Renderer;
 
 import com.sun.faces.RIConstants;
 import com.sun.faces.config.WebConfiguration;
+import com.sun.faces.config.WebConfiguration.BooleanWebContextInitParameter;
 import com.sun.faces.facelets.util.DevTools;
 import com.sun.faces.util.FacesLogger;
 import com.sun.faces.util.Util;
@@ -151,13 +152,21 @@ public class RenderKitUtils {
         UIComponentBase.class.getName() + ".attributesThatAreSet";
 
 
+    /**
+     * Flag determining whether or not javax.faces.ViewState should be namespaced.
+     */
+    private static boolean namespaceParameters = false;
+
+
     protected static final Logger LOGGER = FacesLogger.RENDERKIT.getLogger();
-    
+
 
     // ------------------------------------------------------------ Constructors
 
 
     private RenderKitUtils() {
+    	namespaceParameters = WebConfiguration.getInstance().isOptionEnabled(
+    			BooleanWebContextInitParameter.NamespaceParameters);
     }
 
 
@@ -1611,8 +1620,18 @@ public class RenderKitUtils {
         appendProperty(builder, componentClientId, componentClientId);
 
         if ((null != params) && (!params.isEmpty())) {
+
+            String namingContainerId = "";
+
+            if (namespaceParameters) {
+                UIViewRoot viewRoot = context.getViewRoot();
+                if (viewRoot instanceof NamingContainer) {
+                    namingContainerId = viewRoot.getContainerClientId(context);
+                }
+            }
+
             for (ClientBehaviorContext.Parameter param : params) {
-                appendProperty(builder, param.getName(), param.getValue());
+                appendProperty(builder, namingContainerId + param.getName(), param.getValue());
             }
         }
 
